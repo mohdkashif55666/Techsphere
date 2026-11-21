@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechSphere // Search & Model Registry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: '#FFFFFF',
+                        surface: '#F8F9FA',
+                        surfaceHover: '#F1F3F4',
+                        borderSubtle: '#E0E0E0',
+                        borderFocus: '#1A73E8',
+                        ink: '#202124',
+                        muted: '#5F6368',
+                        lightMuted: '#80868B',
+                        googleBlue: '#1A73E8',
+                        googleBlueBg: '#E8F0FE'
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Roboto Mono"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FFFFFF;
+            color: #202124;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Minimal Google-like Search Card Shadow */
+        .search-box-shadow {
+            box-shadow: 0 1px 6px rgba(32, 33, 36, 0.08);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .search-box-shadow:hover, .search-box-shadow:focus-within {
+            box-shadow: 0 2px 12px rgba(32, 33, 36, 0.16);
+            border-color: transparent;
+        }
+
+        /* Ultra-subtle Google Liquid/Ripple Button Effect */
+        .btn-google-liquid {
+            position: relative;
+            background: rgba(248, 249, 250, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #DADCE0;
+            color: #3C4043;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .btn-google-liquid::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+        }
+
+        .btn-google-liquid:hover {
+            background: #F1F3F4;
+            border-color: #D2D6DA;
+            color: #202124;
+            box-shadow: 0 1px 3px rgba(60, 64, 67, 0.12);
+        }
+
+        .btn-google-liquid:active {
+            background: #E8EAED;
+            box-shadow: inset 0 1px 2px rgba(60, 64, 67, 0.15);
+        }
+
+        /* Google Primary Blue Button */
+        .btn-google-primary {
+            background: #1A73E8;
+            color: #FFFFFF;
+            border: 1px solid transparent;
+            box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-google-primary:hover {
+            background: #1765CC;
+            box-shadow: 0 1px 3px 1px rgba(66, 133, 244, 0.25);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 sm:p-8">
+
+    <!-- TOP HEADER / NAV (MINIMAL GOOGLE CLEANLINESS) -->
+    <header class="w-full max-w-6xl mx-auto flex justify-between items-center py-2 px-2">
+        <div class="flex items-center gap-6 text-xs text-muted font-medium">
+            <span class="text-ink font-semibold tracking-tight text-sm">TechSphere</span>
+            <a href="#matrix" class="hover:text-ink transition-colors hidden sm:inline-block">AI Models</a>
+            <a href="#architecture" class="hover:text-ink transition-colors hidden sm:inline-block">MERN Architecture</a>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="#prompt" class="px-5 py-2 rounded-full text-xs font-medium btn-google-liquid">
+                Get Anti-Gravity Prompt
+            </a>
+            <div class="w-8 h-8 rounded-full bg-googleBlue text-white flex items-center justify-center font-semibold text-xs shadow-sm">
+                TS
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN GOOGLE-LIKE SEARCH HERO SECTION -->
+    <main class="w-full max-w-3xl mx-auto my-auto py-12 flex flex-col items-center text-center">
+        
+        <!-- LOGO & SUBTITLE -->
+        <div class="mb-8">
+            <h1 class="text-5xl sm:text-7xl font-semibold tracking-tight text-ink mb-3">
+                TechSphere<span class="text-googleBlue">.</span>
+            </h1>
+            <p class="text-muted text-sm sm:text-base font-normal max-w-md mx-auto">
+                Search AI tools, local open-source alternatives, and MERN developer blueprints.
+            </p>
+        </div>
+
+        <!-- GOOGLE SEARCH-STYLE INPUT BOX -->
+        <div class="w-full mb-8">
+            <div class="w-full bg-surface border border-borderSubtle rounded-full px-5 py-3.5 flex items-center gap-3 search-box-shadow">
+                <!-- Search Icon -->
+                <svg class="w-5 h-5 text-lightMuted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                
+                <input type="text" id="searchInput" onkeyup="filterTools()" placeholder="Search AI models, MERN guides, or local alternatives (e.g. DeepSeek, Express)..." class="w-full bg-transparent text-sm text-ink placeholder-lightMuted focus:outline-none">
+                
+                <!-- Clear Button -->
+                <button onclick="clearSearch()" class="text-lightMuted hover:text-ink text-xs px-2">✕</button>
+            </div>
+        </div>
+
+        <!-- QUICK SEARCH CHIPS -->
+        <div class="flex flex-wrap justify-center gap-2 mb-16 text-xs text-muted">
+            <span class="text-lightMuted self-center mr-1">Suggested:</span>
+            <button onclick="quickSearch('MERN')" class="px-4 py-1.5 rounded-full bg-surface border border-borderSubtle hover:bg-surfaceHover transition-colors">MERN Stack</button>
+            <button onclick="quickSearch('DeepSeek')" class="px-4 py-1.5 rounded-full bg-surface border border-borderSubtle hover:bg-surfaceHover transition-colors">DeepSeek-V3</button>
+            <button onclick="quickSearch('Local')" class="px-4 py-1.5 rounded-full bg-surface border border-borderSubtle hover:bg-surfaceHover transition-colors">Local Ollama</button>
+        </div>
+
+        <!-- SECTION 01: SEARCHABLE AI MODEL MATRIX -->
+        <section id="matrix" class="w-full text-left bg-surface border border-borderSubtle rounded-2xl p-6 sm:p-8 mb-12 shadow-sm">
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-borderSubtle">
+                <h2 class="text-base font-semibold text-ink">AI Model & Open-Source Register</h2>
+                <span class="text-xs text-muted font-mono bg-googleBlueBg text-googleBlue px-3 py-1 rounded-full">Updated 2026</span>
+            </div>
+
+            <div class="space-y-3" id="matrixList">
+                <div class="matrix-item p-4 bg-canvas border border-borderSubtle rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 hover:border-googleBlue transition-colors">
+                    <div>
+                        <div class="text-xs font-semibold text-ink">MERN Backend API Routing</div>
+                        <div class="text-xs text-muted">Claude 3.5 Sonnet → <span class="text-googleBlue font-medium">DeepSeek-V3 (Open)</span></div>
+                    </div>
+                    <span class="text-xs font-mono text-lightMuted bg-surface px-2.5 py-1 rounded-md border border-borderSubtle">Express / Mongoose</span>
+                </div>
+
+                <div class="matrix-item p-4 bg-canvas border border-borderSubtle rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 hover:border-googleBlue transition-colors">
+                    <div>
+                        <div class="text-xs font-semibold text-ink">CS Algorithms & Thesis Proofs</div>
+                        <div class="text-xs text-muted">GPT-4o → <span class="text-googleBlue font-medium">Llama 3 70B (Air-Gapped)</span></div>
+                    </div>
+                    <span class="text-xs font-mono text-lightMuted bg-surface px-2.5 py-1 rounded-md border border-borderSubtle">Local / Research</span>
+                </div>
+
+                <div class="matrix-item p-4 bg-canvas border border-borderSubtle rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 hover:border-googleBlue transition-colors">
+                    <div>
+                        <div class="text-xs font-semibold text-ink">React UI & Component Refactoring</div>
+                        <div class="text-xs text-muted">GitHub Copilot → <span class="text-googleBlue font-medium">Qwen 2.5 Coder 32B</span></div>
+                    </div>
+                    <span class="text-xs font-mono text-lightMuted bg-surface px-2.5 py-1 rounded-md border border-borderSubtle">Vite / React 19</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 02: MERN ARCHITECTURE CARDS -->
+        <section id="architecture" class="w-full text-left grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+            <div class="p-5 bg-surface border border-borderSubtle rounded-2xl hover:shadow-sm transition-shadow">
+                <div class="text-xs text-googleBlue font-mono mb-2">01. DATABASE</div>
+                <h3 class="text-sm font-semibold mb-2">MongoDB Schemas</h3>
+                <p class="text-xs text-muted leading-relaxed">Strict schema governance, indexing, and Mongoose hooks.</p>
+            </div>
+            <div class="p-5 bg-surface border border-borderSubtle rounded-2xl hover:shadow-sm transition-shadow">
+                <div class="text-xs text-googleBlue font-mono mb-2">02. BACKEND</div>
+                <h3 class="text-sm font-semibold mb-2">Express & JWT</h3>
+                <p class="text-xs text-muted leading-relaxed">Centralized error handling, CORS, and token rotation.</p>
+            </div>
+            <div class="p-5 bg-surface border border-borderSubtle rounded-2xl hover:shadow-sm transition-shadow">
+                <div class="text-xs text-googleBlue font-mono mb-2">03. FRONTEND</div>
+                <h3 class="text-sm font-semibold mb-2">React & Vite</h3>
+                <p class="text-xs text-muted leading-relaxed">State query caching, custom hooks, and clean utility UI.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 03: GOOGLE ANTI-GRAVITY PROMPT PAYLOAD -->
+        <section id="prompt" class="w-full text-left bg-surface border border-borderSubtle rounded-2xl p-6 sm:p-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <div>
+                    <h2 class="text-base font-semibold text-ink">Google Anti-Gravity Prototype Stencil</h2>
+                    <p class="text-xs text-muted">Ready-to-copy prompt for generating full MERN apps.</p>
+                </div>
+                <button onclick="copyPrompt()" id="copy-btn" class="btn-google-primary px-5 py-2.5 rounded-full text-xs font-medium shrink-0">
+                    Copy Stencil
+                </button>
+            </div>
+
+            <pre id="prompt-payload" class="bg-canvas border border-borderSubtle p-5 rounded-xl font-mono text-xs leading-relaxed text-ink overflow-x-auto whitespace-pre-wrap">Act as an expert full-stack engineer and system architect specializing in the MERN stack (MongoDB, Express, React/Vite, Node.js) and educational technology platforms.
+
+Generate a fully functional web prototype for "TechSphere AI" designed for tech professionals and CS students.
+
+Functional Requirements:
+1. AI Tool & Alternative Finder: Searchable index mapping commercial models (GPT-4o, Claude 3.5 Sonnet) to free/open-source alternatives (DeepSeek-V3, Llama 3, Qwen) categorized by task.
+2. MERN Architecture Guide: Direct blueprints for schema validation, secure express middleware, and Vite state hooks.
+3. Quick Stack Terminal Advisor: Interactive tool prompting users for hardware and target stack to yield precise terminal start commands.
+
+Design Constraints:
+- Google-inspired ultra-minimalist aesthetic (clean white canvas, soft rounded inputs, Google Blue #1A73E8 accents).
+- Pure high-readability typography, subtle liquid glass button interactions, and zero heavy distractions.</pre>
+        </section>
+
+    </main>
+
+    <!-- FOOTER (MINIMAL GOOGLE CLEANLINESS) -->
+    <footer class="w-full max-w-6xl mx-auto py-4 border-t border-borderSubtle flex flex-col sm:flex-row justify-between items-center text-xs text-muted gap-2">
+        <p>© 2026 TechSphere. Clean Architecture & Open AI Tools.</p>
+        <div class="flex gap-4">
+            <a href="#" class="hover:text-ink">Privacy</a>
+            <a href="#" class="hover:text-ink">Terms</a>
+            <a href="#" class="hover:text-ink">Settings</a>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE SEARCH SCRIPT -->
+    <script>
+        function filterTools() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.matrix-item');
+
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function quickSearch(term) {
+            document.getElementById('searchInput').value = term;
+            filterTools();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            filterTools();
+        }
+
+        function copyPrompt() {
+            const text = document.getElementById('prompt-payload').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerText = "Copied to Clipboard";
+                setTimeout(() => {
+                    btn.innerText = "Copy Stencil";
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
