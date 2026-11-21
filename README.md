@@ -47,7 +47,7 @@ flowchart TD
 
 ---
 
-## ⚡ Key Features
+## Key Features
 
 1. **AI Model & Open-Source Register**: Exact mapping of tasks to commercial models and their free / open-source / local alternatives (e.g. Claude 3.5 Sonnet → DeepSeek-V3).
 2. **Google-Style Full-Text Search**: Live debounced search with match highlighting, category chips, and filter toggles.
@@ -60,7 +60,7 @@ flowchart TD
 
 ---
 
-## 🚀 Quick Start (Zero Config)
+## Quick Start (Zero Config)
 
 The project includes an embedded in-memory MongoDB fallback. It requires **no local MongoDB server** and **no API keys** to run.
 
@@ -76,11 +76,11 @@ npm run dev
 ```
 
 Open your browser at:
-👉 **http://localhost:5173**
+**http://localhost:5173**
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 Run recommendation engine unit tests:
 ```bash
@@ -89,7 +89,7 @@ npm test
 
 ---
 
-## 🗺 Roadmap (Out of Scope for v1)
+## Roadmap (Out of Scope for v1)
 
 - [ ] Automated live benchmark scraping & pricing sync
 - [ ] Email verification & password reset workflows
