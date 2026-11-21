@@ -51,7 +51,16 @@ const globalLimiter = rateLimit({
 });
 app.use(globalLimiter);
 
-// ── Health check ─────────────────────────────────────────────────────────────
+// ── Health check & Root info ─────────────────────────────────────────────
+app.get('/', (_req, res) => {
+  respond.ok(res, {
+    name: 'TechSphere API',
+    status: 'online',
+    version: '1.0.0',
+    documentation: '/api/v1/health',
+  });
+});
+
 app.get('/api/v1/health', (_req, res) => {
   respond.ok(res, { ok: true, db: 'connected', env: process.env.NODE_ENV });
 });
