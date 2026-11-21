@@ -15,12 +15,17 @@ export async function connectDB() {
   // ── Fallback: in-memory MongoDB (zero external dependency) ──────────────
   try {
     const { MongoMemoryServer } = await import('mongodb-memory-server');
-    _memServer = await MongoMemoryServer.create();
+    _memServer = await MongoMemoryServer.create({
+      binary: {
+        version: '7.0.14', // Explicit Debian 12+ compatible binary
+      },
+    });
     const memUri = _memServer.getUri();
     await mongoose.connect(memUri);
     console.log('✅ MongoDB connected → in-memory (mongodb-memory-server)');
     console.log('   ℹ️  Set MONGO_URI in server/.env to persist data between restarts.');
-  } catch {
+  } catch (err) {
+    console.error('In-memory MongoDB startup failed:', err.message);
     console.error(
       '❌ No MONGO_URI and mongodb-memory-server not available.\n' +
         '   Run: npm install mongodb-memory-server --prefix server\n' +
