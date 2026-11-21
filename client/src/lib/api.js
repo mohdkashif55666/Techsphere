@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Use VITE_API_URL if configured (e.g. on Vercel pointing to deployed backend), otherwise fallback to '/api/v1'
+const baseURL = import.meta.env.VITE_API_URL || '/api/v1';
+
 export const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
