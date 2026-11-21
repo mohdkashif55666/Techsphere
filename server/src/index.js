@@ -32,7 +32,21 @@ const PORT = process.env.PORT || 5001;
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) return callback(null, true);
+      
+      const allowed = process.env.CLIENT_ORIGIN;
+      // If CLIENT_ORIGIN is '*', allow all
+      if (allowed === '*' || !allowed) return callback(null, true);
+
+      // Support comma-separated origins or match vercel preview domains
+      const origins = allowed.split(',').map(s => s.trim());
+      if (origins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive in cloud deployment to prevent CORS friction
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   })
