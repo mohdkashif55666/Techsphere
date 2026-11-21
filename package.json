@@ -7,9 +7,7 @@
     "dev": "concurrently --names \"server,client\" --prefix-colors \"blue,green\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "seed": "npm run seed --prefix server",
     "test": "npm run test --prefix server",
-    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
-    "install": "npm install --prefix client",
-    "build": "npm install --prefix client && npm run build --prefix client"
+    "build": "cd client && npm install && npm run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
