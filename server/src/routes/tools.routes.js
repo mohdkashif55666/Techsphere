@@ -3,27 +3,32 @@ import Tool from '../models/Tool.model.js';
 import SearchLog from '../models/SearchLog.model.js';
 import { respond } from '../utils/respond.js';
 import { asyncWrap } from '../middleware/asyncWrapper.js';
-import { sanitize } from '../utils/sanitize.js';
 
 const router = Router();
+
+// Query-string values are untrusted: Express parses ?a[$ne]=x into an object.
+// Accepting plain strings only means no user input can ever become a Mongo operator,
+// so the filter we build below (which legitimately uses $text / $in / $gte) must NOT
+// be run through a "strip $ keys" sanitizer.
+const asString = (v) => (typeof v === 'string' ? v.trim() : '');
+
+const PRICING_MODELS = ['free', 'freemium', 'paid', 'open-source'];
 
 // GET /api/v1/tools - Text search + filters + sort + pagination
 router.get(
   '/',
   asyncWrap(async (req, res) => {
-    const {
-      q,
-      category,
-      pricing,
-      reasoning,
-      speed,
-      uiLevel,
-      openSource,
-      runsLocally,
-      page = 1,
-      limit = 10,
-      sortBy = 'featured',
-    } = req.query;
+    const q = asString(req.query.q);
+    const category = asString(req.query.category);
+    const pricing = asString(req.query.pricing);
+    const reasoning = asString(req.query.reasoning);
+    const speed = asString(req.query.speed);
+    const uiLevel = asString(req.query.uiLevel);
+    const openSource = asString(req.query.openSource);
+    const runsLocally = asString(req.query.runsLocally);
+    const sortBy = asString(req.query.sortBy) || 'featured';
+    const page = asString(req.query.page) || '1';
+    const limit = asString(req.query.limit) || '10';
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
@@ -31,17 +36,28 @@ router.get(
 
     const filter = {};
 
-    if (q && q.trim()) {
-      filter.$text = { $search: q.trim() };
+    if (q) {
+      filter.$text = { $search: q };
     }
 
-    if (category) {
+    // category becomes a field path (categoryFit.<category>), so only allow plain slugs
+    if (category && /^[A-Za-z]+$/.test(category)) {
       filter[`categoryFit.${category}`] = { $gte: 5 };
     }
 
     if (pricing) {
-      const pricingList = pricing.split(',').map((p) => p.trim());
-      filter['pricing.model'] = { $in: pricingList };
+      const requested = pricing
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => PRICING_MODELS.includes(p));
+      // "Free" in the UI means "costs nothing to start": free, freemium or open-source
+      // (the seed data has no tool whose pricing.model is literally "free").
+      if (requested.includes('free')) {
+        requested.push('freemium', 'open-source');
+      }
+      if (requested.length) {
+        filter['pricing.model'] = { $in: [...new Set(requested)] };
+      }
     }
 
     if (reasoning) {
@@ -74,31 +90,29 @@ router.get(
       sort = { lastVerifiedAt: -1 };
     } else if (sortBy === 'name') {
       sort = { name: 1 };
-    } else if (q && q.trim()) {
+    } else if (q) {
       sort = { score: { $meta: 'textScore' } };
     } else {
       sort = { isFeatured: -1, avgRating: -1, name: 1 };
     }
 
-    const sanitizedFilter = sanitize(filter);
-
-    let queryObj = Tool.find(sanitizedFilter)
+    let queryObj = Tool.find(filter)
       .populate('openAlternatives', 'name slug vendor type pricing capabilities')
       .populate('commercialEquivalents', 'name slug vendor type pricing capabilities');
 
-    if (q && q.trim() && sort.score) {
+    if (q && sort.score) {
       queryObj = queryObj.select({ score: { $meta: 'textScore' } });
     }
 
     const [tools, total] = await Promise.all([
       queryObj.sort(sort).skip(skip).limit(limitNum).lean(),
-      Tool.countDocuments(sanitizedFilter),
+      Tool.countDocuments(filter),
     ]);
 
     // Log query asynchronously
-    if (q && q.trim()) {
+    if (q) {
       SearchLog.create({
-        query: q.trim(),
+        query: q,
         filters: { category, pricing, openSource, runsLocally },
         resultCount: total,
       }).catch(() => {});
