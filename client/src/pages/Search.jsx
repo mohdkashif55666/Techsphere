@@ -58,7 +58,7 @@ export default function Search() {
   }, [debouncedInput]);
 
   // Fetch search results
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: [
       'search-tools',
       queryParam,
@@ -209,6 +209,20 @@ export default function Search() {
                 className="h-28 bg-surface rounded-xl border border-border animate-pulse"
               />
             ))}
+          </div>
+        ) : isError ? (
+          // A failed request must not look like "zero results" — that hid the server bug.
+          <div className="text-center py-16 bg-surface border border-border rounded-2xl p-8">
+            <h3 className="text-base font-semibold text-ink mb-1.5">Couldn't load tools</h3>
+            <p className="text-xs text-muted max-w-sm mx-auto mb-5">
+              Something went wrong talking to the server. Please try again in a moment.
+            </p>
+            <button
+              onClick={() => refetch()}
+              className="px-5 py-2 rounded-full text-xs font-medium btn-google-liquid"
+            >
+              Retry
+            </button>
           </div>
         ) : tools.length === 0 ? (
           <div className="text-center py-16 bg-surface border border-border rounded-2xl p-8">

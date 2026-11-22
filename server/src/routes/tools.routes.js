@@ -8,11 +8,23 @@ const router = Router();
 
 // Query-string values are untrusted: Express parses ?a[$ne]=x into an object.
 // Accepting plain strings only means no user input can ever become a Mongo operator,
-// so the filter we build below (which legitimately uses $text / $in / $gte) must NOT
+// so the filter we build below (which legitimately uses $in / $gte / $or) must NOT
 // be run through a "strip $ keys" sanitizer.
 const asString = (v) => (typeof v === 'string' ? v.trim() : '');
 
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const PRICING_MODELS = ['free', 'freemium', 'paid', 'open-source'];
+
+// A tool counts for a Task button when its categoryFit score (0-10) is at least this.
+// At the old cutoff of 5, every Task button matched 15-16 of the 16 tools, so clicking
+// one looked like the filter did nothing. 8 = "strong fit" and actually narrows the list.
+const MIN_CATEGORY_FIT = 8;
+
+// Fields the search box looks in. This deliberately includes bestFor / strengths / vendor:
+// the old $text index only covered name, description and tags, so a query like
+// "MERN Stack" (where "MERN" only appears in bestFor) found nothing.
+const SEARCH_FIELDS = ['name', 'vendor', 'description', 'tags', 'bestFor', 'strengths'];
 
 // GET /api/v1/tools - Text search + filters + sort + pagination
 router.get(
@@ -37,12 +49,20 @@ router.get(
     const filter = {};
 
     if (q) {
-      filter.$text = { $search: q };
+      // Case-insensitive substring match per word, across all SEARCH_FIELDS; a tool
+      // matches if ANY word matches (same OR behaviour the old $text search had).
+      const terms = [...new Set(q.split(/\s+/).filter((t) => t.length >= 2))].slice(0, 8);
+      if (terms.length) {
+        filter.$or = terms.flatMap((term) => {
+          const rx = new RegExp(escapeRegex(term), 'i');
+          return SEARCH_FIELDS.map((field) => ({ [field]: rx }));
+        });
+      }
     }
 
     // category becomes a field path (categoryFit.<category>), so only allow plain slugs
     if (category && /^[A-Za-z]+$/.test(category)) {
-      filter[`categoryFit.${category}`] = { $gte: 5 };
+      filter[`categoryFit.${category}`] = { $gte: MIN_CATEGORY_FIT };
     }
 
     if (pricing) {
@@ -90,19 +110,13 @@ router.get(
       sort = { lastVerifiedAt: -1 };
     } else if (sortBy === 'name') {
       sort = { name: 1 };
-    } else if (q) {
-      sort = { score: { $meta: 'textScore' } };
     } else {
       sort = { isFeatured: -1, avgRating: -1, name: 1 };
     }
 
-    let queryObj = Tool.find(filter)
+    const queryObj = Tool.find(filter)
       .populate('openAlternatives', 'name slug vendor type pricing capabilities')
       .populate('commercialEquivalents', 'name slug vendor type pricing capabilities');
-
-    if (q && sort.score) {
-      queryObj = queryObj.select({ score: { $meta: 'textScore' } });
-    }
 
     const [tools, total] = await Promise.all([
       queryObj.sort(sort).skip(skip).limit(limitNum).lean(),

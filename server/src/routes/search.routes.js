@@ -10,12 +10,13 @@ const router = Router();
 router.get(
   '/suggestions',
   asyncWrap(async (req, res) => {
-    const { q } = req.query;
-    if (!q || !q.trim()) {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    if (!q) {
       return respond.ok(res, { suggestions: [] });
     }
 
-    const regex = new RegExp(`^${q.trim()}`, 'i');
+    // Escape regex metacharacters: typing "(" or "[" used to make new RegExp() throw (500)
+    const regex = new RegExp(`^${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
     const tools = await Tool.find(
       { $or: [{ name: regex }, { tags: regex }] },
       { name: 1, slug: 1, type: 1 }
