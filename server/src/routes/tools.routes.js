@@ -3,7 +3,6 @@ import Tool from '../models/Tool.model.js';
 import SearchLog from '../models/SearchLog.model.js';
 import { respond } from '../utils/respond.js';
 import { asyncWrap } from '../middleware/asyncWrapper.js';
-import { sanitize } from '../utils/sanitize.js';
 
 const router = Router();
 
@@ -32,31 +31,46 @@ router.get(
     const filter = {};
 
     if (q && q.trim()) {
-      filter.$text = { $search: q.trim() };
+      const cleanQ = q.trim();
+      const escaped = cleanQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { description: { $regex: escaped, $options: 'i' } },
+        { tags: { $regex: escaped, $options: 'i' } },
+        { vendor: { $regex: escaped, $options: 'i' } },
+      ];
     }
 
     if (category) {
-      filter[`categoryFit.${category}`] = { $gte: 5 };
+      const safeCategory = String(category).replace(/[^a-zA-Z0-9]/g, '');
+      if (safeCategory) {
+        filter[`categoryFit.${safeCategory}`] = { $gte: 5 };
+      }
     }
 
     if (pricing) {
-      const pricingList = pricing.split(',').map((p) => p.trim());
-      filter['pricing.model'] = { $in: pricingList };
+      const pricingList = String(pricing)
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => ['free', 'freemium', 'paid', 'open-source'].includes(p));
+      if (pricingList.length > 0) {
+        filter['pricing.model'] = { $in: pricingList };
+      }
     }
 
     if (reasoning) {
       const minReasoning = parseInt(reasoning, 10) || 0;
-      filter['scores.reasoning'] = { $gte: minReasoning };
+      if (minReasoning > 0) filter['scores.reasoning'] = { $gte: minReasoning };
     }
 
     if (speed) {
       const minSpeed = parseInt(speed, 10) || 0;
-      filter['scores.speed'] = { $gte: minSpeed };
+      if (minSpeed > 0) filter['scores.speed'] = { $gte: minSpeed };
     }
 
     if (uiLevel) {
       const minUi = parseInt(uiLevel, 10) || 0;
-      filter['scores.uiDesignSense'] = { $gte: minUi };
+      if (minUi > 0) filter['scores.uiDesignSense'] = { $gte: minUi };
     }
 
     if (openSource === 'true') {
@@ -74,25 +88,17 @@ router.get(
       sort = { lastVerifiedAt: -1 };
     } else if (sortBy === 'name') {
       sort = { name: 1 };
-    } else if (q && q.trim()) {
-      sort = { score: { $meta: 'textScore' } };
     } else {
       sort = { isFeatured: -1, avgRating: -1, name: 1 };
     }
 
-    const sanitizedFilter = sanitize(filter);
-
-    let queryObj = Tool.find(sanitizedFilter)
+    let queryObj = Tool.find(filter)
       .populate('openAlternatives', 'name slug vendor type pricing capabilities')
       .populate('commercialEquivalents', 'name slug vendor type pricing capabilities');
 
-    if (q && q.trim() && sort.score) {
-      queryObj = queryObj.select({ score: { $meta: 'textScore' } });
-    }
-
     const [tools, total] = await Promise.all([
       queryObj.sort(sort).skip(skip).limit(limitNum).lean(),
-      Tool.countDocuments(sanitizedFilter),
+      Tool.countDocuments(filter),
     ]);
 
     // Log query asynchronously

@@ -137,7 +137,7 @@ export default function Search() {
               <button
                 key={cat.slug}
                 type="button"
-                onClick={() => updateParam('category', cat.slug)}
+                onClick={() => updateParam('category', categoryParam === cat.slug ? '' : cat.slug)}
                 className={`px-3 py-1.5 rounded-full transition-colors shrink-0 font-medium ${
                   categoryParam === cat.slug
                     ? 'bg-blue text-white shadow-xs'
