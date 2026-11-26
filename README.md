@@ -43,7 +43,7 @@ flowchart TD
   Router --> RecEngine
   RecEngine -->|Fallback Rule / Gemini| GeminiSvc
   Router --> Database
-```
+
 
 ---
 
